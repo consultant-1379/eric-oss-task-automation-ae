@@ -1,0 +1,157 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+# Default values for eric-oss-task-automation-ae.
+global:
+  networkPolicy:
+    enabled: true
+  registry:
+    url: armdocker.rnd.ericsson.se
+    imagePullPolicy: IfNotPresent
+  pullSecret: "k8s-registry-secret"
+  security:
+    tls:
+      enabled: false
+  support:
+    ipv6:
+      enabled: false
+  timezone: UTC
+  hosts:
+    gas: ""
+    iam: "iam.ericsson.com"
+  iam:
+    clientId: "eo"
+    adminSecret: eric-sec-access-mgmt-creds
+    userKey: kcadminid
+    passwordKey: kcpasswd
+    cacert:
+      secretName: iam-cacert-secret
+      key: tls.crt
+      filePath: iam/ca.crt
+  log:
+    streamingMethod: "direct"
+  logShipper:
+    deployment:
+      type: "sidecar" 
+
+tags:
+  so: false
+  pf: false
+  uds: false
+  platform: false
+
+labels: {}
+
+ingress:
+  enabled: true
+  hostname: ""
+  tls:
+    enabled: true
+    passthrough: false
+    secretName: ta-tls-secret
+  ingressClass: ""
+  annotations: ""
+
+tls:
+  enabled: true
+  secretName: ta-tls-secret
+
+nodeSelector: {}
+
+tolerations: []
+
+serviceAccount:
+  name: ""
+
+terminationGracePeriodSeconds: 60
+
+imageCredentials:
+  pullSecret: "k8s-registry-secret"
+
+eric-oss-flow-automation:
+  datasource:
+    postgresHost: eric-oss-flow-automation-db-pg
+    postgresPort: 5432
+    databaseName: flowautomationdb
+    credentials:
+      secret: eric-oss-task-automation-ae-fa-pg-secret
+      keyForSuperUserId: "super-user"
+      keyForSuperPw: "super-pwd"
+  bragent:
+    enabled: true
+  log:
+    streamingMethod: "direct" 
+
+eric-oss-flow-automation-db-pg:
+  enabled: true
+  brAgent:
+    enabled: true
+    backupTypeList:
+      - "DEFAULT"
+      - "PLATFORM"
+  credentials:
+    kubernetesSecretName: eric-oss-task-automation-ae-fa-pg-secret
+    keyForUserId: "custom-user"
+    keyForUserPw: "custom-pwd"
+    keyForSuperPw: "super-pwd"
+    keyForMetricsPw: "metrics-pwd"
+    keyForReplicaId: "replica-user"
+    keyForReplicaPw: "replica-pwd"
+  patroni:
+    logLevel: INFO
+  service:
+    port: 5432
+    endpoints:
+      postgres:
+        tls:
+          enforced: optional
+      postgresExporter:
+        tls:
+          enforced: optional
+  highAvailability:
+    synchronousModeEnabled: false
+    replicaCount: 1
+  global:
+    security:
+      tls:
+        enabled: false
+
+rbac:
+  enabled: true
+  provider: eric-oss-flow-automation
+
+defaultUser:
+  username:
+  password:
+
+api-gateway-route:
+  enabled: true
+  client:
+    pullPolicy: IfNotPresent
+  credentials:
+    name: eric-oss-system-user-secret
+    user-key: system-user
+    pwd-key: system-user-pwd
+  route-path:
+    service-name: http://eric-oss-flow-automation:8080
+    route-id: flow-automation
+    tag: -i
+    paths:
+      path-for-flows: /flow-automation/v1/flows/**
+      path-for-executions: /flow-automation/v1/executions/**
+      path-for-ui: /flow-automation/ui/**
+      path-for-camunda-rest-engine: /engine-rest/**
+      path-for-camunda-cockpit: /camunda/**

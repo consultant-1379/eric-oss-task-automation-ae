@@ -1,0 +1,19 @@
+apiVersion: v2
+dependencies:
+- import-values:
+  - child: logShipper.config
+    parent: global.logShipper.config
+  name: eric-log-shipper
+  repository: https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm
+  version: 14.2.0+25
+- name: eric-oss-flow-automation
+  repository: https://arm.seli.gic.ericsson.se/artifactory/proj-eric-oss-drop-helm/
+  version: 1.67.0+1
+- alias: eric-oss-flow-automation-db-pg
+  name: eric-data-document-database-pg
+  repository: https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm/
+  version: 8.10.0+111
+description: Chart containing OSS Task Automation Microservices
+maintainers: null
+name: eric-oss-task-automation-ae
+version: 0.53.0

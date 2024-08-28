@@ -1,0 +1,132 @@
+modelVersion: 2.0
+
+description: "OSS TASK AUTOMATION Pipeline"
+
+docker-images:
+  - adp-release-auto: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-adp-release-auto:latest
+  - adp-inca: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/adp-int-helm-chart-auto:latest
+  - adp-helm-dr-check: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/adp-helm-dr-checker:latest
+  - adp-sh: armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob-shbuilder:latest
+  - py3-builder: armdocker.rnd.ericsson.se/proj-adp-cicd-drop/bob-python3builder:latest
+  - git: armdocker.rnd.ericsson.se/dockerhub-ericsson-remote/alpine/git:latest
+
+properties:
+  - helm-charts-dir: charts
+  - helm-chart-name: eric-oss-task-automation-ae
+  - testsuite-dir: testsuite/helm-chart-validator
+  - testsuite-image-name: eric-oss-task-automation-ae-helm-testsuite
+  - site-values-file: ${testsuite-dir}/site_values.yaml
+  - chart-repo-oss-task-automation-ae: https://arm.seli.gic.ericsson.se/artifactory/proj-<repo>
+
+env:
+  - PWD
+  - HOME
+  - GIT_COMMIT
+  - CHANGED_PYTHON_FILES
+  - HELM_REPO_CREDENTIALS
+  - DR_CHECK_FULL_DEPS (default=false)
+
+var:
+  - chart-version
+  - helm-chart-directory
+  - design-rule-feature-level
+
+rules:
+  git-clean:
+    - task: git-clean
+      docker-image: git
+      cmd: clean -xdff
+
+  lint:
+    - task: helm
+      docker-image: adp-release-auto
+      docker-flags:
+        - --env ENABLE_HELM_V3=true
+      cmd: helm lint ${helm-charts-dir}/${helm-chart-name}
+        --values ${site-values-file}
+    - task: python3
+      docker-image: py3-builder
+      cmd: pylint --persistent=no ${env.CHANGED_PYTHON_FILES}
+
+  validate-chart-schema:
+    - task: validate
+      docker-image: adp-release-auto
+      cmd: check-jsonschema --check-metaschema ${env.PWD}/${helm-charts-dir}/${helm-chart-name}/values.schema.json
+    - task: test_schema
+      docker-image: adp-release-auto
+      cmd: ${env.PWD}/testsuite/schematests/test.sh ${env.PWD}/${helm-chart-name}-0.0.0-0.tgz
+
+  shellcheck:
+    - task: run-shellcheck
+      docker-image: adp-sh
+      cmd: sh -c "git diff-tree --diff-filter=ACM --no-commit-id --name-only -r $GIT_COMMIT *.sh | xargs shellcheck"
+
+  helm-package:
+  - task: package
+    docker-image: adp-inca
+    docker-flags:
+    - --env HELM_REPO_CREDENTIALS
+    cmd: ihc-package --version 0.0.0-0 --output ${env.PWD} --helm-credentials ${env.HELM_REPO_CREDENTIALS} --folder ${env.PWD}/${helm-charts-dir}/${helm-chart-name}
+
+  validate-helm3-charts:
+  - task: validate
+    docker-image: adp-inca
+    cmd: bash -c 'export PATH=/usr/share/helm/3.x/:$PATH;
+      TEMPLATE_FAILED=blank;
+      for VALUES in $(find ${env.PWD}/${testsuite-dir} | grep yaml | grep -v "[0-9].[0-9].[0-9]-[0-9]" | grep -v "*eo-bur*");
+        do echo "Scanning $VALUES";
+        helm template ${env.PWD}/eric-oss-task-automation-ae-*.tgz -f $VALUES 1> /dev/null;
+        if [ $? -ne 0 ]; then
+          TEMPLATE_FAILED=true;
+          echo -e "\e[1m\e[31mTEMPLATE_FAILED\e[0m";
+        else
+          echo -e "\e[1m\e[32mTEMPLATE_PASSED\e[0m";
+        fi
+      done;
+      if [ "$TEMPLATE_FAILED" = "true" ]; then
+        echo -e "\e[1m\e[31mOne or More Templates have failed, Please Investigate\e[0m";
+        exit 1;
+      fi'
+
+  build-testsuite-image:
+    - task: docker-build
+      cmd: docker build ${env.PWD}/${testsuite-dir}
+        --tag ${testsuite-image-name}:latest
+
+  run-chart-testsuite:
+    - task: get-chart-version
+      cmd: find . -maxdepth 1 -name 'eric-oss-task-automation-ae-[0-9]*.tgz' | grep -oP 'eric-oss-task-automation-ae-\K.*(?=\.tgz)' > .bob/var.chart-version
+    - task: run-testsuite
+      cmd: docker run --name ${testsuite-image-name}
+        -v ${env.PWD}/eric-oss-task-automation-ae-${var.chart-version}.tgz:/eric-oss-task-automation-ae.tgz
+        ${testsuite-image-name}:latest
+
+  test-suite-report-and-clean:
+    - task: get-test-report
+      cmd: docker cp ${testsuite-image-name}:/testsuite/report.html ${env.PWD}/chart-test-report.html
+    - task: clean-container
+      cmd: docker rm -f ${testsuite-image-name}
+
+  set-design-rule-parameters:
+    - task: generate-design-rule-parameters
+      cmd: bash -c '
+          if [[ ${env.DR_CHECK_FULL_DEPS} != "false" ]]; then
+            echo ".bob/eric-oss-task-automation-ae_tmp/eric-oss-task-automation-ae" > .bob/var.helm-chart-directory;
+            echo "0" > .bob/var.design-rule-feature-level;
+          else
+            echo "${helm-charts-dir}/${helm-chart-name}" > .bob/var.helm-chart-directory;
+            echo "1" > .bob/var.design-rule-feature-level;
+          fi'
+
+  design-rule-checker:
+    - task: helm-dr-checker
+      docker-image: adp-helm-dr-check
+      cmd: helm-dr-check
+        -DhelmDesignRule.config.DR-D1121-141=skip
+        -DhelmDesignRule.config.DR-D1121-067=skip
+        -DhelmDesignRule.feature.eric-oss-task-automation-ae.dependency=${var.design-rule-feature-level}
+        -Dhelmdrck.credential.file.path=${env.HELM_REPO_CREDENTIALS}
+        --helm-chart ${var.helm-chart-directory}
+        --values-file ${site-values-file}
+        --log-level WARN
+        -DhelmDesignRule.config.drHc064=disable

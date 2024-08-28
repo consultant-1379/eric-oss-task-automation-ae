@@ -1,0 +1,95 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+{{- if index .Values "api-gateway-route" "enabled" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "eric-oss-task-automation-ae.name" . }}-flow-automation-route-configmap
+  labels:
+  {{- include "eric-oss-task-automation-ae.kubernetes-io-info" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-task-automation-ae.helm-annotations" . | indent 4 }}
+data:
+  route.json: |
+    {
+        "id": "{{ index .Values "api-gateway-route" "route-path" "route-id" }}",
+        "predicates": [
+            {
+                "name": "Path",
+                "args": {
+                    "_genkey_0": "{{ index .Values "api-gateway-route" "route-path" "paths" "path-for-flows"}}",
+                    "_genkey_1": "{{ index .Values "api-gateway-route" "route-path" "paths" "path-for-executions" }}",
+                    "_genkey_2": "{{ index .Values "api-gateway-route" "route-path" "paths" "path-for-ui" }}",
+                    "_genkey_3": "{{ index .Values "api-gateway-route" "route-path" "paths" "path-for-camunda-rest-engine" }}",
+                    "_genkey_4": "{{ index .Values "api-gateway-route" "route-path" "paths" "path-for-camunda-cockpit" }}"
+                }
+            },
+            {
+                "name": "Host",
+                "args": {
+                    "_genkey_0": "{{ index .Values "global" "hosts" "ta" }}"
+                }
+            }
+        ],
+        "filters": [
+        {
+            "name": "AddRequestHeader",
+            "args": {
+                "_genkey_0": "X-RateLimit-Map-Name",
+                "_genkey_1": "ae-rate-limiter"
+            }
+        },
+        {
+            "name": "AddRequestHeader",
+            "args": {
+                "_genkey_0": "X-RateLimit-Max-Access",
+                "_genkey_1": "410"
+            }
+        },
+        {
+            "name": "AddRequestHeader",
+            "args": {
+                "_genkey_0": "X-RateLimit-Reset-Time",
+                "_genkey_1": "15"
+            }
+        },
+        {
+            "name": "RateLimitFilter",
+            "args": {}
+        },
+        {
+            "name": "AddUserNameCookieFilter",
+            "args": {}
+        },
+        {
+            "name": "RemoveResponseHeader",
+            "args": {
+                "_genkey_0": "Set-Cookie"
+            }
+        },
+        {
+            "name": "RewritePath",
+            "args": {
+              "_genkey_0": "/flow-automation/ui/(?<segment>.*)",
+              "_genkey_1": "/flowui/$\\{segment}"
+            }
+        }
+    ],
+        "uri": "{{ index .Values "api-gateway-route" "route-path" "service-name" }}",
+        "order": 0
+    }
+{{- end }}

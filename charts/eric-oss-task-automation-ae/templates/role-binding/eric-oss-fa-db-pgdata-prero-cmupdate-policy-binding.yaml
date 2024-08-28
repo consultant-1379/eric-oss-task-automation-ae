@@ -1,0 +1,1 @@
+{{- include "eric-oss-task-automation-ae.role-binding" (list $ . "eric-oss-flow-automation-db-pg-prero-cmupdate-psp-binding" "eric-oss-flow-automation-db-pg-prero-cmupdate") -}}

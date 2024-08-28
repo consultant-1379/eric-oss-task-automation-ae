@@ -1,0 +1,73 @@
+{{- if index .Values "rbac" "enabled" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "eric-oss-task-automation-ae.name" . }}-flow-automation-realm-hook
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade, post-rollback
+    "helm.sh/hook-weight": "30"
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+    {{- include "eric-oss-task-automation-ae.helm-annotations" . | indent 4 }}
+spec:
+  backoffLimit: 8
+  template:
+    spec:
+      serviceAccountName: {{ template "eric-oss-task-automation-ae.name" . }}-sa
+      {{- if include "eric-oss-task-automation-ae.pullSecrets" . }}
+      imagePullSecrets:
+        - name: {{ include "eric-oss-task-automation-ae.pullSecrets" . }}
+      {{- end }}
+      restartPolicy: Never
+      containers:
+        - name: keycloak-client
+          image: {{ template "eric-oss-task-automation-ae.imagePath" (dict "imageId" "keycloakClient" "values" .Values "files" .Files) }}
+          imagePullPolicy: {{ include "eric-oss-task-automation-ae.registryImagePullPolicy" .}}
+          securityContext:
+            privileged: false
+            runAsUser: 128474
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+              - all
+          env:
+            - name: IAM_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.iam.adminSecret | quote }}
+                  key: {{ .Values.global.iam.userKey | quote }}
+            - name: IAM_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.iam.adminSecret | quote }}
+                  key: {{ .Values.global.iam.passwordKey | quote }}
+          args:
+            - "create"
+            - "user_realm_role_mappings"
+            - "--keycloak_hostname={{ .Values.global.hosts.iam }}"
+            - "--keycloak_user=$(IAM_ADMIN_USER)"
+            - "--keycloak_password=$(IAM_ADMIN_PASSWORD)"
+            - "--username={{ .Values.defaultUser.username }}"
+            - "--config=/config/user-realm-role-mappings.json"
+          volumeMounts:
+            - name: create-user-realm-role-mappings-volume
+              mountPath: /config
+            - name: create-cacert-volume
+              mountPath: /mnt/certs
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+      volumes:
+      - name: create-user-realm-role-mappings-volume
+        configMap:
+          name: {{ template "eric-oss-task-automation-ae.name" . }}-flow-automation-realm-role-mapping-configmap
+          defaultMode: 0777
+      - name: create-cacert-volume
+        secret:
+          secretName: {{ .Values.global.iam.cacert.secretName }}
+          items:
+            - key: {{ .Values.global.iam.cacert.key }}
+              path: {{ .Values.global.iam.cacert.filePath }}
+  {{- end }}

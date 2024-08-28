@@ -1,0 +1,221 @@
+#
+# COPYRIGHT Ericsson 2022
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+{{- if index .Values "rbac" "enabled" }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "eric-oss-task-automation-ae.name" . }}-flow-automation-rbac-configuration-configmap
+  labels:
+  {{- include "eric-oss-task-automation-ae.kubernetes-io-info" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-task-automation-ae.helm-annotations" . | indent 4 }}
+data:
+  rbac-configuration.json: |
+    {
+        "roles": [{
+                "name": "Flowautomation_Administrator",
+                "attributes": {},
+                "composites": {
+                  "realm": [
+                    "UserAdmin"
+                  ],
+                "client": {}
+                }
+            }, {
+                "name": "Flowautomation_Operator",
+                "attributes": {},
+                "composites": {
+                  "realm": [
+                    "GAS_User"
+                  ],
+                "client": {}
+                }
+            }
+        ],
+        "authorization": {
+            "resources": [{
+                    "name": "FA Flows Endpoints",
+                    "type": "urn:eo:ta:resources:flowautomation",
+                    "ownerManagedAccess": false,
+                    "attributes": {},
+                    "uris": [
+                        "/flow-automation/v1/flows/",
+                        "/flow-automation/v1/flows"
+                    ],
+                    "scopes": [{
+                            "name": "GET"
+                        }, {
+                            "name": "POST"
+                        }
+                    ]
+                }, {
+                    "name": "FA Specific Flow Endpoints",
+                    "type": "urn:eo:ta:resources:flowautomation",
+                    "ownerManagedAccess": false,
+                    "attributes": {},
+                    "uris": [
+                        "/flow-automation/v1/flows/*/**"
+                    ],
+                    "scopes": [{
+                            "name": "GET"
+                        }, {
+                            "name": "POST"
+                        }, {
+                            "name": "PUT"
+                        }, {
+                            "name": "DELETE"
+                        }
+                    ]
+                },
+                {
+                    "name": "FA Executions Endpoints",
+                    "type": "urn:eo:ta:resources:flowautomation",
+                    "ownerManagedAccess": false,
+                    "attributes": {},
+                    "uris": [
+                        "/flow-automation/v1/executions",
+                        "/flow-automation/v1/executions/**"
+                    ],
+                    "scopes": [{
+                            "name": "GET"
+                        }, {
+                            "name": "POST"
+                        }, {
+                            "name": "PUT"
+                        }, {
+                            "name": "DELETE"
+                        }
+                    ]
+                },
+                {
+                    "name": "FA UI Endpoints",
+                    "type": "urn:eo:ta:resources:flowautomation",
+                    "ownerManagedAccess": false,
+                    "attributes": {},
+                    "uris": [
+                        "/flow-automation/ui",
+                        "/flow-automation/ui/**"
+                    ],
+                    "scopes": [{
+                            "name": "GET"
+                        }, {
+                            "name": "PUT"
+                        }
+                    ]
+                }
+            ],
+            "policies": [{
+                    "name": "Is Flowautomation Administrator",
+                    "type": "role",
+                    "logic": "POSITIVE",
+                    "decisionStrategy": "UNANIMOUS",
+                    "config": {
+                        "roles": "[{\"id\":\"Flowautomation_Administrator\",\"required\":false}]"
+                    }
+                }, {
+                    "name": "Is Flowautomation Operator",
+                    "type": "role",
+                    "logic": "POSITIVE",
+                    "decisionStrategy": "UNANIMOUS",
+                    "config": {
+                        "roles": "[{\"id\":\"Flowautomation_Operator\",\"required\":false}]"
+                    }
+                }, {
+                    "name": "FA Flows Admin Permission",
+                    "type": "scope",
+                    "logic": "POSITIVE",
+                    "decisionStrategy": "AFFIRMATIVE",
+                    "config": {
+                        "resources": "[\"FA Flows Endpoints\"]",
+                        "scopes": "[\"POST\"]",
+                        "applyPolicies": "[\"Is Flowautomation Administrator\"]"
+                    }
+                }, {
+                    "name": "FA Flows Default Permission",
+                    "type": "scope",
+                    "logic": "POSITIVE",
+                    "decisionStrategy": "AFFIRMATIVE",
+                    "config": {
+                        "resources": "[\"FA Flows Endpoints\"]",
+                        "scopes": "[\"GET\"]",
+                        "applyPolicies": "[\"Is Flowautomation Administrator\",\"Is Flowautomation Operator\"]"
+                    }
+                }, {
+                    "name": "FA Specific Flow Admin Permission",
+                    "type": "scope",
+                    "logic": "POSITIVE",
+                    "decisionStrategy": "AFFIRMATIVE",
+                    "config": {
+                        "resources": "[\"FA Specific Flow Endpoints\"]",
+                        "scopes": "[\"PUT\",\"DELETE\"]",
+                        "applyPolicies": "[\"Is Flowautomation Administrator\"]"
+                    }
+                }, {
+                    "name": "FA Specific Flow Default Permission",
+                    "type": "scope",
+                    "logic": "POSITIVE",
+                    "decisionStrategy": "AFFIRMATIVE",
+                    "config": {
+                        "resources": "[\"FA Specific Flow Endpoints\"]",
+                        "scopes": "[\"GET\",\"POST\"]",
+                        "applyPolicies": "[\"Is Flowautomation Administrator\",\"Is Flowautomation Operator\"]"
+                    }
+                }, {
+                    "name": "FA Executions Admin Permission",
+                    "type": "scope",
+                    "logic": "POSITIVE",
+                    "decisionStrategy": "AFFIRMATIVE",
+                    "config": {
+                        "resources": "[\"FA Executions Endpoints\"]",
+                        "scopes": "[\"DELETE\"]",
+                        "applyPolicies": "[\"Is Flowautomation Administrator\"]"
+                    }
+                }, {
+                    "name": "FA Executions Default Permission",
+                    "type": "scope",
+                    "logic": "POSITIVE",
+                    "decisionStrategy": "AFFIRMATIVE",
+                    "config": {
+                        "resources": "[\"FA Executions Endpoints\"]",
+                        "scopes": "[\"GET\",\"POST\",\"PUT\"]",
+                        "applyPolicies": "[\"Is Flowautomation Administrator\",\"Is Flowautomation Operator\"]"
+                    }
+                }, {
+                    "name": "FA UI Default Permission",
+                    "type": "scope",
+                    "logic": "POSITIVE",
+                    "decisionStrategy": "AFFIRMATIVE",
+                    "config": {
+                        "resources": "[\"FA UI Endpoints\"]",
+                        "scopes": "[\"GET\",\"PUT\"]",
+                        "applyPolicies": "[\"Is Flowautomation Administrator\",\"Is Flowautomation Operator\"]"
+                    }
+                }
+            ],
+            "scopes": [{
+                    "name": "GET"
+                }, {
+                    "name": "POST"
+                }, {
+                    "name": "DELETE"
+                }, {
+                    "name": "PUT"
+                }
+            ]
+        }
+    }
+{{- end }}

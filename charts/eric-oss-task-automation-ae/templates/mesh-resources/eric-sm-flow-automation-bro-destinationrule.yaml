@@ -1,0 +1,27 @@
+{{- $serviceMesh := include "eric-oss-task-automation-ae.service-mesh.enabled" . | trim -}}
+{{- $tls := include "eric-oss-task-automation-ae.global-security-tls-enabled" . | trim -}}
+{{- if and (eq $serviceMesh "true") (eq $tls "true") -}}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ template "eric-oss-task-automation-ae.name" . }}-flow-automation-bro-destinationrule
+  annotations:
+    {{- include "eric-oss-task-automation-ae.helm-annotations" .| nindent 4 }}
+    meta.helm.sh/release-name: {{ template "eric-oss-task-automation-ae.release.name" . }}
+  labels:
+    {{- include "eric-oss-task-automation-ae.kubernetes-io-info" .| nindent 4 }}
+spec:
+  host: eric-ctrl-bro
+  trafficPolicy:
+    portLevelSettings:
+    - port:
+        number: 7001
+      tls:
+        mode: MUTUAL
+        clientCertificate: /etc/istio/tls/flow-automation-bro/cert.pem
+        privateKey: /etc/istio/tls/flow-automation-bro/key.pem
+        caCertificates: /etc/istio/tls-ca/cacertbundle.pem
+  workloadSelector:
+    matchLabels:
+      eric-ctrl-bro-ism-access: "true"
+{{- end }}

@@ -1,0 +1,61 @@
+# 
+#  Note: this site_values.yaml is a modified version of:
+#    testsuite/helm-chart-validator/site_values.yaml
+#    available from repository: https://gerrit.ericsson.se/#/admin/projects/OSS/com.ericsson.oss.orchestration.common/oss-common-ci
+#
+
+global:
+  hosts:
+    so: "so.dummy.hostname.com"
+    iam: "iam.dummy.hostname.com"
+    pf: "pf.dummy.hostname.com"
+    uds: "uds.dummy.hostname.com"
+    gr: "gr.dummy.hostname.com"
+    gas: "gas.dummy.hostname.com"
+    adc: "adc.dummy.hostname.com"
+    appmgr: "appmgr.dummy.hostname.com"
+    ta: "ta.dummy.hostname.com"
+  registry:
+    url: "registry.dummy.hostname.com"
+    username: "admin"
+    password: "ericsson"
+  serviceMesh:
+    enabled: true
+    ingress:
+      enabled: true
+  pullSecret: "k8s-registry-secret"
+  support:
+    ipv6:
+      enabled: false
+  timezone: UTC
+  security:
+    privilegedPolicyClusterRoleName: "privileged_cluster_role"
+  networkPolicy:
+    enabled: true
+
+tags:
+  ta: true
+  so: true
+  pf: true
+  uds: true
+  platform: true
+
+# required by multiple Charts: gas, so, pf, uds
+defaultUser:
+  username: "user"
+  password: "Ericsson123!"
+
+
+# eric-oss-ericsson-adaptation
+stubs:
+  enabled: true
+
+# eric-oss-config-handling
+cps-user:
+  credentials:
+    username: "cps-user"
+    password: "Ericsson123!"
+dmi-user:
+  credentials:
+    username: "dmi-user"
+    password: "Ericsson123!"

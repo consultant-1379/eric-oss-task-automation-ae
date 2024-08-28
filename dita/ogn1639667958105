@@ -1,0 +1,261 @@
+<concept xmlns:ditaarch="http://dita.oasis-open.org/architecture/2005/" id="da8ced2b803e6032cf75eed3af80c8a2" xml:lang="en-US"><title>Infrastructure Requirements</title><prolog><source/><permissions view="ericsson_internal"/><metadata><keywords><keyword/></keywords><othermeta content="NA" name="workitem"/></metadata><resourceid id="NA" ux-source-priority="topic-and-map"/></prolog><conbody>
+        <p>This document describes the dimensioning resources required by Ericsson Orchestrator (EO)
+            running on Cloud Container Distribution (CCD) and other Kubernetes distribution.</p>
+        <p>Use this document to dimension the Kubernetes Cluster for the relevant EO Application -
+            Evolved VNF Manager (EVNFM), Service Orchestration (SO), Policy Framework (PF), and
+            Universal Design Studio (UDS).</p>
+        <note id="note_N1002C_N10021_N10001">
+            <p>This document only specifies the footprint of the EO Cloud Native applications and
+                does not specify the complete deployment footprint. While dimensioning the
+                Kubernetes cluster, platform resource requirements must be coupled with EO resource
+                requirements.</p>
+        </note>
+        <p>This document references the dimensions for the standalone applications and combined
+            application deployments.</p>
+        <p>Standalone Deployments:<ul id="ul_esv_2lh_zkb">
+                <li>
+                    <p>Container VNFM module within EVNFM </p>
+                </li>
+                <li>
+                    <p>VM VNFM module within EVNFM</p>
+                </li>
+                <li>
+                    <p>SO</p>
+                </li>
+                <li>
+                    <p>PF</p>
+                </li>
+                <li>
+                    <p>UDS</p>
+                </li>
+            </ul></p>
+        <p>Combined deployments: <ul id="ul_ih5_vkh_zkb">
+                <li>
+                    <p>EVNFM (Container VNFM + VM VNFM) and SO</p>
+                </li>
+                <li>
+                    <p>EVNFM (Container VNFM + VM VNFM)</p>
+                </li>
+                <li>
+                    <p>EVNFM (Container VNFM + VM VNFM), SO, PF, and UDS</p>
+                </li>
+            </ul>Other combinations of deployments are supported but not outlined in this
+            document.</p>
+        <p>
+            <note id="note_N10084_N10081_N10021_N10001">
+                <p>To get other combinations, which are not set out within this document, calculate
+                    the appropriate dimensions by combining the standalone deployment values for the
+                    relevant EO Applications.</p>
+            </note>
+        </p>
+        <section id="section_kvd_nvx_xlb">
+            <title>Cluster Availability Recommendations</title>
+            <p>For HA of certain data services, it is recommended that the container instances run
+                on at least three different workers. These workers must not run on the same physical
+                host, so availability can be maintained if a physical node fails. This is not an
+                enforced requirement, it is a recommendation to maintain availability during a
+                physical host failure.</p>
+        </section>
+        <section id="section_gyh_qvx_xlb">
+            <title>Expansion</title>
+            <p>When dimensioning your system, choose the appropriate dimensions from below. Consider
+                plans for deploying extra applications as the expansion of the volumes is not
+                available yet.</p>
+        </section>
+        <section id="section_hyg_5vx_xlb">
+            <title>Kubernetes Master Reference Configuration</title>
+            <p>Ericsson Orchestrator (EO) was tested using the following configuration for
+                Kubernetes master nodes:</p>
+            <table colsep="1" frame="all" id="table_xcm_5vx_xlb" rowsep="1">
+                <title>Master Node Configuration</title>
+                <tgroup cols="5">
+                    <colspec colname="c1" colnum="1" colwidth="1*"/>
+                    <colspec colname="c2" colnum="2" colwidth="1*"/>
+                    <colspec colname="c3" colnum="3" colwidth="1*"/>
+                    <colspec colname="c4" colnum="4" colwidth="1*"/>
+                    <colspec colname="c5" colnum="5" colwidth="1*"/>
+                    <thead>
+                        <row>
+                            <entry>
+                                <p>Node Count</p>
+                            </entry>
+                            <entry>
+                                <p>VCPUs (per node)</p>
+                            </entry>
+                            <entry>
+                                <p>Memory (GB) (per node)</p>
+                            </entry>
+                            <entry>
+                                <p>Root Volume (GB) (per node)</p>
+                            </entry>
+                            <entry>
+                                <p>Configuration  Volume</p>
+                            </entry>
+                        </row>
+                    </thead>
+                    <tbody>
+                        <row>
+                            <entry>
+                                <p>3</p>
+                            </entry>
+                            <entry>
+                                <p>2</p>
+                            </entry>
+                            <entry>
+                                <p>4</p>
+                            </entry>
+                            <entry>
+                                <p>20</p>
+                            </entry>
+                            <entry>
+                                <p>10</p>
+                            </entry>
+                        </row>
+                    </tbody>
+                </tgroup>
+            </table>
+        </section>
+        <section id="section_ccy_xvx_xlb">
+            <title>EO Deployment Manager Requirements</title>
+            <p>EO Deployment Manager is executed as a docker container and has the following
+                    requirements:<ul id="ul_izd_yvx_xlb">
+                    <li>
+                        <p>EO Deployment Manager must be run from a location with access to the
+                            Kubernetes cluster. </p>
+                    </li>
+                </ul></p>
+            <p>EO Deployment Manager has the following resource requirements:</p>
+            <table colsep="1" frame="all" id="table_jzd_yvx_xlb" rowsep="1">
+                <title/>
+                <tgroup cols="3">
+                    <colspec colname="c1" colnum="1" colwidth="1*"/>
+                    <colspec colname="c2" colnum="2" colwidth="1*"/>
+                    <colspec colname="c3" colnum="3" colwidth="1*"/>
+                    <thead>
+                        <row>
+                            <entry>
+                                <p>Min VCPUs</p>
+                            </entry>
+                            <entry>
+                                <p>Min Memory</p>
+                            </entry>
+                            <entry>
+                                <p>Root Volume (Gb)</p>
+                            </entry>
+                        </row>
+                    </thead>
+                    <tbody>
+                        <row>
+                            <entry>
+                                <p>2</p>
+                            </entry>
+                            <entry>
+                                <p>4</p>
+                            </entry>
+                            <entry>
+                                <p>90</p>
+                            </entry>
+                        </row>
+                    </tbody>
+                </tgroup>
+            </table>
+            <note id="note_N1015C_N10153_N10021_N10001">
+                <p>For CCD Deployments, the EO Deployment Manager can run on the CCD Director
+                    Node.</p>
+            </note>
+        </section>
+        <section id="section_cz2_jkj_snb">
+            <title>Client VM Storage Requirement</title>
+            <p>A client VM with a variable amount of storage is required. This is the host for which
+                the deployment manager executes life cycle management towards the EO cluster. The
+                extra space is required because the CSAR contains a compressed tar file which is up
+                to three times the CSAR size when extracted. Also, when the docker tar files are
+                loading into the docker client, the docker can use space that is three times the
+                size of the original tar file. When deploying on CCD, the director node can be used
+                as a client VM. Refer to the <xref keyref="da8ced2b803e6032cf75eed3af80c8a2/table_pnr_skj_snb">Storage Requirements for Client VM</xref> table to see how much storage is
+                required on the client VM for the given deployment type:</p>
+            <table colsep="1" frame="all" id="table_pnr_skj_snb" rowsep="1">
+                <title>Storage Requirements for Client VM</title>
+                <tgroup cols="2">
+                    <colspec colname="c1" colnum="1" colwidth="1*"/>
+                    <colspec colname="c2" colnum="2" colwidth="1*"/>
+                    <thead>
+                        <row>
+                            <entry>
+                                <p>Deployment Type</p>
+                            </entry>
+                            <entry>
+                                <p>Storage Requirement on Client VM (GB)</p>
+                            </entry>
+                        </row>
+                    </thead>
+                    <tbody>
+                        <row>
+                            <entry>
+                                <p>EVNFM – Container VNFM</p>
+                            </entry>
+                            <entry>
+                                <p>50</p>
+                            </entry>
+                        </row>
+                        <row>
+                            <entry>
+                                <p>EVNFM – VM VNFM</p>
+                            </entry>
+                            <entry>
+                                <p>40</p>
+                            </entry>
+                        </row>
+                        <row>
+                            <entry>
+                                <p>SO</p>
+                            </entry>
+                            <entry>
+                                <p>60</p>
+                            </entry>
+                        </row>
+                        <row>
+                            <entry>
+                                <p>UDS</p>
+                            </entry>
+                            <entry>
+                                <p>40</p>
+                            </entry>
+                        </row>
+                        <row>
+                            <entry>
+                                <p>PF</p>
+                            </entry>
+                            <entry>
+                                <p>40</p>
+                            </entry>
+                        </row>
+                        <row>
+                            <entry>
+                                <p>EVNFM - (Container VNFM &amp; VM VNFM) Combined</p>
+                            </entry>
+                            <entry>
+                                <p>50</p>
+                            </entry>
+                        </row>
+                        <row>
+                            <entry>
+                                <p>EVNFM (Container VNFM &amp; VM VNFM) and SO Combined</p>
+                            </entry>
+                            <entry>
+                                <p>60</p>
+                            </entry>
+                        </row>
+                        <row>
+                            <entry>
+                                <p>EVNFM (Container VNFM &amp; VM VNFM), SO, PF, and UDS</p>
+                            </entry>
+                            <entry>
+                                <p>60</p>
+                            </entry>
+                        </row>
+                    </tbody>
+                </tgroup>
+            </table><p>Test with eric-oss-task-automation-ae</p>
+        </section>
+    </conbody></concept>

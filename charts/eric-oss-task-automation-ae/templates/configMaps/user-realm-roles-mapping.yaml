@@ -1,0 +1,17 @@
+{{- if index .Values "rbac" "enabled" }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ template "eric-oss-task-automation-ae.name" . }}-flow-automation-realm-role-mapping-configmap
+  labels:
+  {{- include "eric-oss-task-automation-ae.kubernetes-io-info" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-task-automation-ae.helm-annotations" . | indent 4 }}
+data:
+  user-realm-role-mappings.json: |
+    [
+      {
+        "name": "Flowautomation_Administrator"
+      }
+    ]
+{{- end }}

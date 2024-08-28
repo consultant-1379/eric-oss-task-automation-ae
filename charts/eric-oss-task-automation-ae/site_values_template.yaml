@@ -1,0 +1,18 @@
+global:
+  hosts:
+    iam: ""
+    gas: ""
+    ta: ""
+  registry:
+    url: ""
+    username: ""
+    password: ""
+  support:
+    ipv6:
+      enabled: false
+  timezone: UTC
+  createClusterRoles: true
+
+defaultUser:
+  username: ""
+  password: ""

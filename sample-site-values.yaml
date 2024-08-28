@@ -1,0 +1,13 @@
+global:
+  hosts:
+    iam: "iam.dummy.ericsson.se"
+    gas: "gas.dummy.ericsson.se"
+  registry:
+    url: "armdocker.rnd.ericsson.se"
+    username: "changeit"
+    password: "changeit"
+  support:
+    ipv6:
+      enabled: false
+  timezone: UTC
+  createClusterRoles: true
